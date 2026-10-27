@@ -17,10 +17,9 @@
     });
   });
 
-  /* ---- photo tile: avatar -> teaser comment on hover -> click flips to photo ---- */
   var wrap=document.getElementById('tilewrap'),tile=document.getElementById('tile'),
       bub=document.getElementById('bubble'),img=document.getElementById('photo');
-  var teasers=['psst, click me','there is a real human in here','no AI-generated face, promise','tap to meet the human'],ti=0,hideT;
+  var teasers=['psst'],ti=0,hideT;
   function tease(){bub.textContent=teasers[ti++%teasers.length]}
   function flash(ms){wrap.classList.add('hint');clearTimeout(hideT);hideT=setTimeout(function(){wrap.classList.remove('hint')},ms)}
   tease();
@@ -36,7 +35,6 @@
   img.addEventListener('error',nophoto);
   if(!finePointer)setTimeout(function(){bub.textContent='tap to meet the human';flash(3500)},1800);
 
-  /* ---- typing title: "Aditya Dolas ;" -> backspace -> "Adi ;" -> backspace -> repeat ---- */
   var typed=document.getElementById('typed');
   function show(s){
     typed.textContent='';
@@ -119,7 +117,7 @@
     }
   }
   grid.appendChild(frag);
-  document.getElementById('total').textContent=total+' contributions in the last year';
+  document.getElementById('total').textContent=total+' contributions since '+D.since;
   var cw=document.getElementById('calwrap');cw.scrollLeft=cw.scrollWidth;
 
   /* ---- reveal on scroll ---- */
