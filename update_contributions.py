@@ -108,7 +108,11 @@ def main():
         f"Wrote {output.name}: {sum(counts)} contributions "
         f"from {first_year} through {last_year}."
     )
-
+    sitemap = Path(__file__).with_name("sitemap.xml")
+    if sitemap.exists():
+        text = sitemap.read_text(encoding="utf-8")
+        text = re.sub(r"<lastmod>.*?</lastmod>", f"<lastmod>{date.today().isoformat()}</lastmod>", text)
+        sitemap.write_text(text, encoding="utf-8")
 
 if __name__ == "__main__":
     main()

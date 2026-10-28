@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://adityadolas-theta.vercel.app/sitemap.xml

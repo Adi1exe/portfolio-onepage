@@ -62,19 +62,15 @@
   tickClock();setInterval(tickClock,15000);
 
   /* ---- Now playing (Last.fm). Fill these two in. ---- */
-  var LFM_USER='PavitraPapi',LFM_KEY='e6eef070b842e52e5938fbd2336751c3';
-  var np=document.getElementById('np'),npt=document.getElementById('nptext');
-  function poll(){
-    if(!LFM_USER||!LFM_KEY)return;
-    fetch('https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user='+encodeURIComponent(LFM_USER)+'&api_key='+encodeURIComponent(LFM_KEY)+'&format=json&limit=1')
-      .then(function(x){return x.json()}).then(function(j){
-        var t=j.recenttracks.track[0];if(!t)return;
-        var live=t['@attr']&&t['@attr'].nowplaying==='true';
-        npt.textContent=(live?'Now playing · ':'Last played · ')+t.name+' — '+t.artist['#text'];
-        np.href=t.url;np.classList.toggle('idle',!live);
-      }).catch(function(){});
-  }
-  poll();setInterval(poll,30000);
+ var np=document.getElementById('np'),npt=document.getElementById('nptext');
+function poll(){
+  fetch('/api/nowplaying').then(function(x){return x.json()}).then(function(t){
+    if(!t.name)return;
+    npt.textContent=(t.live?'Now playing · ':'Last played · ')+t.name+' — '+t.artist;
+    np.href=t.url;np.classList.toggle('idle',!t.live);
+  }).catch(function(){});
+}
+poll();setInterval(poll,30000);
 
   /* ---- project previews: floating card on desktop hover, inline thumbnail on touch/mobile ---- */
   var peek=document.getElementById('peek'),svgs={};
@@ -117,7 +113,8 @@
     }
   }
   grid.appendChild(frag);
-  document.getElementById('total').textContent=total+' contributions since '+D.since;
+  document.getElementById('total').textContent=grid.setAttribute('role','img'); 
+  grid.setAttribute('aria-label',total+' contributions since '+D.since);
   var cw=document.getElementById('calwrap');cw.scrollLeft=cw.scrollWidth;
 
   /* ---- reveal on scroll ---- */
