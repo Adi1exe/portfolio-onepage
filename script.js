@@ -72,14 +72,9 @@ function poll(){
 }
 poll();setInterval(poll,30000);
 
-  /* ---- project previews: floating card on desktop hover, inline thumbnail on touch/mobile ---- */
+  /* ---- project previews: floating card on desktop hover only ---- */
   var peek=document.getElementById('peek'),svgs={};
   peek.querySelectorAll('svg').forEach(function(s){svgs[s.dataset.k]=s});
-  document.querySelectorAll('[data-peek]').forEach(function(el){
-    var th=document.createElement('div');th.className='thumb';th.setAttribute('aria-hidden','true');
-    var c=svgs[el.dataset.peek].cloneNode(true);c.removeAttribute('data-k');c.classList.add('show');th.appendChild(c);
-    el.insertBefore(th,el.firstChild);
-  });
   if(finePointer&&!reduced){
     var px=0,py=0,cx=0,cy=0,raf=0;
     var loop=function(){cx+=(px-cx)*.18;cy+=(py-cy)*.18;peek.style.transform='translate3d('+cx+'px,'+cy+'px,0)';
@@ -113,8 +108,10 @@ poll();setInterval(poll,30000);
     }
   }
   grid.appendChild(frag);
-  document.getElementById('total').textContent=grid.setAttribute('role','img'); 
+  document.getElementById('total').textContent=total+' contributions since '+D.since;
+  grid.setAttribute('role','img');
   grid.setAttribute('aria-label',total+' contributions since '+D.since);
+  grid.classList.add('in');
   var cw=document.getElementById('calwrap');cw.scrollLeft=cw.scrollWidth;
 
   /* ---- reveal on scroll ---- */

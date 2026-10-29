@@ -152,6 +152,11 @@ footer .semi{color:var(--accent);font-family:var(--serif);font-size:18px}
   .peek{display:block}
   .swipe{display:none}
 }
+/* Keep touch layouts free of hover previews, including phones that report a fine pointer. */
+@media (max-width:639px){
+  .thumb,.peek{display:none!important}
+  .grid i{opacity:1;transform:none;transition:none}
+}
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}
   .rv,.grid i{opacity:1!important;transform:none!important;transition:none!important}
