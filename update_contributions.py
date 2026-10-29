@@ -1,4 +1,4 @@
-"""Refresh data.js with the complete public GitHub contribution history."""
+"""Refresh data.js with a rolling 53-week GitHub contribution snapshot."""
 from datetime import date, timedelta
 from html.parser import HTMLParser
 import json
@@ -43,13 +43,11 @@ class ContributionParser(HTMLParser):
 
 
 def main():
-    user = json.loads(fetch(f"https://api.github.com/users/{USER}"))
-    created_at = user.get("created_at")
-    if not isinstance(created_at, str):
-        raise ValueError(f"GitHub did not return an account creation date for {USER}.")
-
-    first_year = date.fromisoformat(created_at[:10]).year
-    last_year = date.today().year
+    today = date.today()
+    start = today - timedelta(days=364)
+    start -= timedelta(days=(start.weekday() + 1) % 7)  # Sunday, matching GitHub's columns.
+    first_year = start.year
+    last_year = today.year
     rows = {}
 
     for year in range(first_year, last_year + 1):
@@ -80,20 +78,17 @@ def main():
             )
         rows.update(yearly_rows)
 
-    first_day = date(first_year, 1, 1)
-    last_day = date(last_year, 12, 31)
-    start = first_day - timedelta(days=(first_day.weekday() + 1) % 7)
-    end = last_day + timedelta(days=(5 - last_day.weekday()) % 7)
     lv, counts = [], []
     current_day = start
-    while current_day <= end:
+    while current_day <= today:
         level, count = rows.get(current_day, (0, 0))
         lv.append(str(level))
         counts.append(count)
         current_day += timedelta(days=1)
 
     data = {
-        "since": first_year,
+        "since": start.isoformat(),
+        "through": today.isoformat(),
         "start": start.isoformat(),
         "lv": "".join(lv),
         "ct": counts,
@@ -106,7 +101,7 @@ def main():
     )
     print(
         f"Wrote {output.name}: {sum(counts)} contributions "
-        f"from {first_year} through {last_year}."
+        f"from {start.isoformat()} through {today.isoformat()}."
     )
     sitemap = Path(__file__).with_name("sitemap.xml")
     if sitemap.exists():

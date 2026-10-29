@@ -89,30 +89,51 @@ poll();setInterval(poll,30000);
     });
   }
 
-  /* ---- GitHub contributions (snapshot from data.js) ---- */
-  var D=window.CONTRIB;
+  /* ---- GitHub contributions: rolling year, live API with local snapshot fallback ---- */
   var grid=document.getElementById('grid'),months=document.getElementById('months');
-  var start=new Date(D.start+'T00:00:00Z'),total=0,lastM=-1;
   var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var frag=document.createDocumentFragment();
-  for(var k=0;k<D.lv.length;k++){
-    var d=new Date(start.getTime()+k*864e5),n=D.ct[k];total+=n;
-    var c=document.createElement('i');
-    c.dataset.l=D.lv[k];
-    c.style.setProperty('--c',Math.floor(k/7));
-    c.title=(n||'No')+' contribution'+(n===1?'':'s')+' on '+MN[d.getUTCMonth()]+' '+d.getUTCDate()+', '+d.getUTCFullYear();
-    frag.appendChild(c);
-    if(k%7===0){
-      var m=d.getUTCMonth();
-      if(m!==lastM){var s=document.createElement('span');s.textContent=MN[m];s.style.gridColumn=(Math.floor(k/7)+1);months.appendChild(s);lastM=m}
-    }
+  function renderCalendar(data){
+    var frag=document.createDocumentFragment(),monthFrag=document.createDocumentFragment(),lastM=-1;
+    var start=new Date(data.start+'T00:00:00Z'),total=0;
+    data.days.forEach(function(day,k){
+      var d=new Date(day.date+'T00:00:00Z'),n=day.count;
+      total+=n;
+      var c=document.createElement('i');
+      c.dataset.l=day.level;
+      c.style.setProperty('--c',Math.floor(k/7));
+      c.title=(n||'No')+' contribution'+(n===1?'':'s')+' on '+MN[d.getUTCMonth()]+' '+d.getUTCDate()+', '+d.getUTCFullYear();
+      frag.appendChild(c);
+      if(k%7===0){
+        var m=d.getUTCMonth();
+        if(m!==lastM){var s=document.createElement('span');s.textContent=MN[m];s.style.gridColumn=(Math.floor(k/7)+1);monthFrag.appendChild(s);lastM=m}
+      }
+    });
+    grid.replaceChildren(frag);
+    months.replaceChildren(monthFrag);
+    document.getElementById('total').textContent=total+' contributions in the past year';
+    grid.setAttribute('role','img');
+    grid.setAttribute('aria-label',total+' contributions from '+data.start+' through '+data.through);
+    grid.classList.add('in');
+    var cw=document.getElementById('calwrap');cw.scrollLeft=cw.scrollWidth;
   }
-  grid.appendChild(frag);
-  document.getElementById('total').textContent=total+' contributions since '+D.since;
-  grid.setAttribute('role','img');
-  grid.setAttribute('aria-label',total+' contributions since '+D.since);
-  grid.classList.add('in');
-  var cw=document.getElementById('calwrap');cw.scrollLeft=cw.scrollWidth;
+  var snapshot=window.CONTRIB;
+  if(snapshot){
+    var snapshotDays=[],today=new Date(),todayISO=today.toISOString().slice(0,10);
+    today.setUTCHours(0,0,0,0);today.setUTCDate(today.getUTCDate()-364);today.setUTCDate(today.getUTCDate()-today.getUTCDay());
+    var snapshotStart=today.toISOString().slice(0,10);
+    for(var i=0;i<snapshot.lv.length;i++){
+      var sd=new Date(new Date(snapshot.start+'T00:00:00Z').getTime()+i*864e5);
+      var dayISO=sd.toISOString().slice(0,10);
+      if(dayISO>=snapshotStart&&dayISO<=todayISO)snapshotDays.push({date:dayISO,level:Number(snapshot.lv[i]),count:snapshot.ct[i]||0});
+    }
+    if(snapshotDays.length)renderCalendar({start:snapshotStart,through:todayISO,days:snapshotDays});
+  }
+  fetch('/api/contributions',{cache:'no-store'}).then(function(response){
+    if(!response.ok)throw new Error('Contribution endpoint unavailable');
+    return response.json();
+  }).then(function(data){
+    if(data.start&&data.through&&Array.isArray(data.days))renderCalendar(data);
+  }).catch(function(){});
 
   /* ---- reveal on scroll ---- */
   var els=document.querySelectorAll('.rv');
